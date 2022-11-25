@@ -1,0 +1,20 @@
+[package]
+name = "inverted_index"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+postgres = "0.19.3"
+postgres-openssl = "0.5.0"
+openssl = { version = "0.10", features = ["vendored"] }
+dotenv = "0.15.0"
+rayon = "1.5.3"
+actix-web = "4"
+serde = { version = "1.0.137", features = ["derive"] }
+serde_json = "1.0.81"
+log = "0.4.17"
+rust-bert = "0.19.0"
+anyhow = "1.0.66"
