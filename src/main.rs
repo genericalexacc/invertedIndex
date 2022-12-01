@@ -28,8 +28,13 @@ async fn main() -> std::io::Result<()> {
     logging::init();
     testing_index();
 
-    HttpServer::new(|| App::new().service(search_index))
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(search_index)
+            .service(insert_index)
+            .service(create_index)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }

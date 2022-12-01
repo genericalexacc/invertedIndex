@@ -3,6 +3,7 @@ use log::trace;
 pub type ResultT<T> = Result<T, Box<dyn std::error::Error>>;
 
 use crate::in_memory_index::NewDoc;
+
 pub fn get_files_for_test() -> Vec<NewDoc> {
     use std::fs;
     let paths = fs::read_dir("./Input/").unwrap();
