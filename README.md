@@ -1,6 +1,8 @@
 # invertedIndex
 
 Link to try it out: [inverted-index](https://inverted-index.fly.dev)
+
+
 A rust implementation of an inverted index.
 An api is used to serve it via Actix.
 It uses mutexes and threads to achieve higher throughput to the index and concurrent access.
