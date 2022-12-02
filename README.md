@@ -4,7 +4,7 @@ Link to try it out: [inverted-index](https://inverted-index.fly.dev)
 
 
 A rust implementation of an inverted index.
-An api is used to serve it via Actix.
+An http API is served by Actix.
 It uses mutexes and threads to achieve higher throughput to the index and concurrent access.
 From the front-end you can also index webpages by passing a url.
 
