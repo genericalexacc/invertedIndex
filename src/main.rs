@@ -31,7 +31,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            // .default_service(web::resource("").route(web::get().to(react_index)))
             .service(search_index)
             .service(insert_index)
             .service(create_index)
