@@ -1,4 +1,4 @@
-# invertedIndex
+# InvertedIndex
 
 Link to try it out: [inverted-index](https://inverted-index.fly.dev)
 
