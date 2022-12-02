@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+use actix_files as fs;
 use actix_web::{App, HttpServer};
 
 mod in_memory_index;
@@ -30,11 +31,15 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            // .default_service(web::resource("").route(web::get().to(react_index)))
             .service(search_index)
             .service(insert_index)
             .service(create_index)
+            .service(insert_url_index)
+            .service(fs::Files::new("/dashboard", "./static").show_files_listing())
+            .service(actix_files::Files::new("/", "./static").index_file("index.html"))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }

@@ -1,8 +1,14 @@
+use anyhow::{Context, Result};
 use log::trace;
-
-pub type ResultT<T> = Result<T, Box<dyn std::error::Error>>;
+use webpage::{Webpage, WebpageOptions};
 
 use crate::in_memory_index::NewDoc;
+
+pub async fn get_url_content(url: &str) -> Result<(String, String)> {
+    let info = Webpage::from_url(url, WebpageOptions::default())?;
+    let page_title = info.html.title.context("No title")?;
+    Ok((page_title, info.html.text_content))
+}
 
 pub fn get_files_for_test() -> Vec<NewDoc> {
     use std::fs;
@@ -26,7 +32,8 @@ pub fn testing_index() {
     use super::DocumentIndex;
     use super::InMemoryDocumentIndex;
     use super::GLOBAL_INDEX_MAP;
-    let mut index = GLOBAL_INDEX_MAP.lock().unwrap();
+
+    let mut index = GLOBAL_INDEX_MAP.try_lock().unwrap();
 
     let files = get_files_for_test();
 

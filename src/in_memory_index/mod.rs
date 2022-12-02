@@ -4,6 +4,8 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 
+use anyhow::{bail, Result};
+
 mod doc_occurence;
 pub mod document_index;
 mod stop_words;
@@ -55,22 +57,28 @@ impl DocumentIndex for InMemoryDocumentIndex {
             let result = Self::from_single_document(doc);
 
             let dict = self.data.clone();
-            Self::add_from_index_static(dict, result);
+            Self::add_from_index_static(dict, result); // Error swallowed here
         });
     }
 
-    fn add_single_document(&self, doc: NewDoc) -> JoinHandle<()> {
+    fn add_single_document(&self, doc: NewDoc) -> JoinHandle<Result<()>> {
         let dict = self.data.clone();
 
         thread::spawn(|| {
             let result = Self::from_single_document(doc);
-            Self::add_from_index_static(dict, result);
+            Self::add_from_index_static(dict, result)
         })
     }
 
-    fn add_from_index_static(dict: Arc<Mutex<IndexMap>>, other: IndexMap) {
+    fn add_from_index_static(dict: Arc<Mutex<IndexMap>>, other: IndexMap) -> Result<()> {
         let s = dict;
-        let mut index = s.lock().unwrap();
+        let index_lock = s.try_lock();
+
+        if index_lock.is_err() {
+            bail!("Can't get index mutex");
+        }
+
+        let mut index = index_lock.unwrap();
 
         for (token, docs) in other {
             index
@@ -78,11 +86,19 @@ impl DocumentIndex for InMemoryDocumentIndex {
                 .or_insert_with(HashMap::new)
                 .extend(docs)
         }
+
+        Ok(())
     }
 
-    fn query(&self, query_text: String) -> Vec<DocId> {
+    fn query(&self, query_text: String) -> Result<Vec<DocId>> {
         let index_arc = self.data.clone();
-        let index = index_arc.lock().unwrap();
+        let index_mutex_result = index_arc.try_lock();
+
+        if index_mutex_result.is_err() {
+            bail!("Can't get index mutex");
+        }
+
+        let index = index_mutex_result.unwrap();
 
         type UHashMapWithRef<'a> = HashMap<&'a String, usize>;
 
@@ -114,11 +130,11 @@ impl DocumentIndex for InMemoryDocumentIndex {
             })
             .collect();
 
-        std::collections::BinaryHeap::from(occurences_per_doc)
+        Ok(std::collections::BinaryHeap::from(occurences_per_doc)
             .into_sorted_vec()
             .iter()
             .map(|a| a.doc_id.clone())
-            .collect::<Vec<DocId>>()
+            .collect::<Vec<DocId>>())
     }
 }
 
@@ -137,11 +153,11 @@ mod tests {
         });
         let _ = handle.join();
 
-        for doc_id in index.data.lock().unwrap().get("test").unwrap().keys() {
+        for doc_id in index.data.try_lock().unwrap().get("test").unwrap().keys() {
             assert_eq!(*doc_id, "test".to_string());
         }
 
-        for doc_id in index.data.lock().unwrap().get("test").unwrap().keys() {
+        for doc_id in index.data.try_lock().unwrap().get("test").unwrap().keys() {
             assert_eq!(*doc_id, "test".to_string());
         }
     }
@@ -151,7 +167,7 @@ mod tests {
         let index_a_struct = InMemoryDocumentIndex::new();
         {
             let index_arc = index_a_struct.data.clone();
-            let mut index_a = index_arc.lock().unwrap();
+            let mut index_a = index_arc.try_lock().unwrap();
 
             let mut entry_c = std::collections::HashMap::new();
             entry_c.insert("test".to_string(), 1);
@@ -168,7 +184,7 @@ mod tests {
         InMemoryDocumentIndex::add_from_index_static(index_a_struct.data.clone(), b);
 
         let index_arc = index_a_struct.data;
-        let index_a = index_arc.lock().unwrap();
+        let index_a = index_arc.try_lock().unwrap();
 
         for doc_id in index_a.get("c").unwrap().keys() {
             assert_eq!(*doc_id, "test".to_string());
