@@ -23,6 +23,6 @@ fn query_index(
     query: &str,
 ) -> Result<Vec<DocId>> {
     let index = map.get(index).context("Can't get index")?;
-    let res = index.query(query.to_string())?;
+    let res = index.query_okapi(&query.to_string())?;
     Ok(res)
 }
